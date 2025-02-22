@@ -5,6 +5,13 @@ import pandas as pd
 
 from utils import get_stock_data, prepare_metrics_data, prepare_financial_data
 
+def format_number(number):
+    """Format large numbers with commas"""
+    try:
+        return "{:,}".format(int(number))
+    except (ValueError, TypeError):
+        return "N/A"
+
 # Page configuration
 st.set_page_config(
     page_title="Indian Stock Analytics Dashboard",
@@ -67,25 +74,30 @@ if symbol:
 
                 # Stock price chart
                 st.subheader("Stock Price History")
-                fig = go.Figure()
-                fig.add_trace(go.Candlestick(
-                    x=history.index,
-                    open=history['Open'],
-                    high=history['High'],
-                    low=history['Low'],
-                    close=history['Close'],
-                    name='Price'
-                ))
 
-                fig.update_layout(
-                    template='plotly_white',
-                    xaxis_title="Date",
-                    yaxis_title="Price (₹)",
-                    height=500,
-                    margin=dict(l=0, r=0, t=30, b=0)
-                )
+                # Ensure we have valid historical data
+                if not history.empty and all(col in history.columns for col in ['Open', 'High', 'Low', 'Close']):
+                    fig = go.Figure()
+                    fig.add_trace(go.Candlestick(
+                        x=history.index,
+                        open=history['Open'],
+                        high=history['High'],
+                        low=history['Low'],
+                        close=history['Close'],
+                        name='Price'
+                    ))
 
-                st.plotly_chart(fig, use_container_width=True)
+                    fig.update_layout(
+                        template='plotly_white',
+                        xaxis_title="Date",
+                        yaxis_title="Price (₹)",
+                        height=500,
+                        margin=dict(l=0, r=0, t=30, b=0)
+                    )
+
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.warning("Historical data is not available for this stock.")
 
                 # Key metrics
                 st.subheader("Key Market Metrics")
@@ -120,9 +132,3 @@ if symbol:
         st.error(f"An error occurred: {str(e)}")
 else:
     st.info("👆 Enter a stock symbol above to get started!")
-
-def format_number(number):
-    try:
-        return "{:,}".format(int(number))
-    except (ValueError, TypeError):
-        return "N/A"
