@@ -13,10 +13,13 @@ def get_stock_data(symbol, exchange="US"):
     """Fetch stock data from Yahoo Finance or NSE"""
     try:
         if exchange == "NSE":
-            return get_nse_data(symbol)
+            # For NSE stocks, we need to ensure proper symbol format
+            clean_symbol = symbol.replace('.NS', '')  # Remove .NS if present
+            return get_nse_data(clean_symbol)
         else:
             return get_yf_data(symbol)
     except Exception as e:
+        st.error(f"Error fetching data: {str(e)}")
         return {
             'valid': False,
             'error': str(e)
@@ -38,8 +41,15 @@ def get_yf_data(symbol):
 def get_nse_data(symbol):
     """Fetch data from NSE"""
     try:
+        st.info(f"Fetching NSE data for {symbol}...")
+
         # Get quote from NSE
+        if not nse.is_valid_code(symbol):
+            raise Exception(f"Invalid NSE symbol: {symbol}")
+
         quote = nse.get_quote(symbol)
+        if not quote:
+            raise Exception(f"No data found for symbol: {symbol}")
 
         # Create historical data structure
         today = datetime.now()
@@ -77,7 +87,23 @@ def get_nse_data(symbol):
             'exchange': 'NSE'
         }
     except Exception as e:
-        raise Exception(f"Error fetching NSE data: {str(e)}")
+        st.error(f"NSE Data Error: {str(e)}")
+        # Fallback to Yahoo Finance for Indian stocks
+        try:
+            st.info("Attempting to fetch data from Yahoo Finance...")
+            yf_symbol = f"{symbol}.NS"
+            stock = yf.Ticker(yf_symbol)
+            info = stock.info
+            hist = stock.history(period="1y")
+
+            return {
+                'info': info,
+                'history': hist,
+                'valid': True,
+                'exchange': 'NSE'
+            }
+        except Exception as yf_error:
+            raise Exception(f"Failed to fetch data from both NSE and Yahoo Finance: {str(e)}, {str(yf_error)}")
 
 def format_large_number(num):
     """Format large numbers with K, M, B suffixes"""
