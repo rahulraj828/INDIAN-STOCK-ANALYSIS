@@ -63,7 +63,12 @@ def create_card(title, content):
 def render_price_chart(fig):
     """Render price chart widget"""
     with drag_container():
-        with dashboard.Item("price_chart"):
+        layout_item = next(item for item in load_layout() if item["key"] == "price_chart")
+        with dashboard.Item("price_chart", 
+                          x=layout_item["x"],
+                          y=layout_item["y"],
+                          w=layout_item["width"],
+                          h=layout_item["height"]):
             create_card(
                 "Stock Price Chart",
                 html.Div(fig)
@@ -72,7 +77,12 @@ def render_price_chart(fig):
 def render_market_metrics(metrics):
     """Render market metrics widget"""
     with drag_container():
-        with dashboard.Item("market_metrics"):
+        layout_item = next(item for item in load_layout() if item["key"] == "market_metrics")
+        with dashboard.Item("market_metrics",
+                          x=layout_item["x"],
+                          y=layout_item["y"],
+                          w=layout_item["width"],
+                          h=layout_item["height"]):
             create_card(
                 "Market Metrics",
                 mui.Grid(
@@ -88,7 +98,12 @@ def render_market_metrics(metrics):
 def render_financial_info(financial_df):
     """Render financial information widget"""
     with drag_container():
-        with dashboard.Item("financial_info"):
+        layout_item = next(item for item in load_layout() if item["key"] == "financial_info")
+        with dashboard.Item("financial_info",
+                          x=layout_item["x"],
+                          y=layout_item["y"],
+                          w=layout_item["width"],
+                          h=layout_item["height"]):
             create_card(
                 "Financial Information",
                 mui.TableContainer(
