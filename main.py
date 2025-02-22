@@ -18,36 +18,46 @@ apply_custom_styles()
 
 # Header
 st.title("📈 Stock Analytics Dashboard")
-st.markdown("Enter a stock symbol to view detailed financial information and analytics.")
+st.markdown("Get detailed financial information from both Indian and International markets.")
+
+# Exchange selection
+exchange = st.radio(
+    "Select Exchange",
+    ["US", "NSE"],
+    horizontal=True,
+    help="Choose US for international stocks or NSE for Indian stocks"
+)
 
 # Stock symbol input
-symbol = st.text_input("Enter Stock Symbol (e.g., AAPL, GOOGL)", "").upper()
+symbol_placeholder = "RELIANCE" if exchange == "NSE" else "AAPL"
+symbol = st.text_input(f"Enter Stock Symbol (e.g., {symbol_placeholder})", "").upper()
 
 if symbol:
     # Fetch stock data
-    data = get_stock_data(symbol)
-    
+    data = get_stock_data(symbol, exchange)
+
     if data['valid']:
         info = data['info']
         history = data['history']
-        
+
         # Display company name and current price
         st.markdown(f"### {info.get('longName', symbol)}")
         col1, col2 = st.columns(2)
-        
+
+        currency = "₹" if exchange == "NSE" else "$"
         with col1:
             st.metric(
                 "Current Price",
-                f"${info.get('currentPrice', 'N/A')}",
+                f"{currency}{info.get('currentPrice', 'N/A')}",
                 f"{info.get('regularMarketChangePercent', 0):.2f}%"
             )
-        
+
         with col2:
             st.metric(
                 "Previous Close",
-                f"${info.get('previousClose', 'N/A')}"
+                f"{currency}{info.get('previousClose', 'N/A')}"
             )
-        
+
         # Stock price chart
         st.subheader("Stock Price History")
         fig = go.Figure()
@@ -59,17 +69,17 @@ if symbol:
             close=history['Close'],
             name='Price'
         ))
-        
+
         fig.update_layout(
             template='plotly_white',
             xaxis_title="Date",
-            yaxis_title="Price (USD)",
+            yaxis_title=f"Price ({currency})",
             height=500,
             margin=dict(l=0, r=0, t=30, b=0)
         )
-        
+
         st.plotly_chart(fig, use_container_width=True)
-        
+
         # Key metrics
         st.subheader("Key Metrics")
         metrics = prepare_metrics_data(info)
@@ -82,12 +92,12 @@ if symbol:
                         <p style="font-size: 20px;">{value}</p>
                     </div>
                 """, unsafe_allow_html=True)
-        
+
         # Financial data table
         st.subheader("Financial Information")
         financial_df = prepare_financial_data(info)
         st.table(financial_df)
-        
+
         # Download button for CSV
         csv = financial_df.to_csv(index=False)
         st.download_button(
@@ -96,7 +106,7 @@ if symbol:
             file_name=f"{symbol}_financial_data.csv",
             mime="text/csv"
         )
-        
+
     else:
         st.error(f"Error fetching data for {symbol}. Please check the symbol and try again.")
 else:
